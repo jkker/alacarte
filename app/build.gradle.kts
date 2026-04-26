@@ -24,7 +24,7 @@ android {
         create("release") {
             // 1. Define the Standard Location
             val homeDir = System.getProperty("user.home")
-            val keyStoreFile = java.io.File("$homeDir/.config/android-signing/release.jks")
+            val keyStoreFile = File("$homeDir/.config/android-signing/release.jks")
 
             // 2. Load passwords from Global Gradle Properties (~/.gradle/gradle.properties)
             // Gradle automatically loads these into the project scope!
