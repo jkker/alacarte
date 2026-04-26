@@ -1,8 +1,8 @@
 [tools]
 android-sdk = "1.0"
-gradle = "9.2.1"
+gradle = "8.14.4"
 java = "21.0.2"
-kotlin = "2.3.0"
+kotlin = "2.1.21"
 
 [env]
 # Load .env file automatically
