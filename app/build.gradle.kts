@@ -20,32 +20,48 @@ android {
         versionName = "1.0.0"
     }
 
-    signingConfigs {
-        create("release") {
-            // 1. Define the Standard Location
-            val homeDir = System.getProperty("user.home")
-            val keyStoreFile = File("$homeDir/.config/android-signing/release.jks")
+    val releaseTaskRequested =
+        gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
 
-            // 2. Load passwords from Global Gradle Properties (~/.gradle/gradle.properties)
-            // Gradle automatically loads these into the project scope!
-            val keyStorePass = project.findProperty("ORG_KEYSTORE_PASS") as? String
-            val keyAliasName = project.findProperty("ORG_KEY_ALIAS") as? String
-            val keyAliasPass = project.findProperty("ORG_KEY_ALIAS_PASS") as? String
+    val keystoreFile = providers.environmentVariable("ANDROID_KEYSTORE_FILE").orNull
+    val keystorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
+    val keyAliasValue = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
+    val keyPasswordValue = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+    val keystoreTypeValue = providers.environmentVariable("ANDROID_KEYSTORE_TYPE").orNull
 
-            if (keyStoreFile.exists() && keyStorePass != null) {
-                storeFile = keyStoreFile
-                storePassword = keyStorePass
-                keyAlias = keyAliasName
-                keyPassword = keyAliasPass
-            } else {
-                println("⚠️ Release Keystore not found at $keyStoreFile. Skipping signing config.")
+    val hasReleaseSigning =
+        !keystoreFile.isNullOrBlank() &&
+        !keystorePassword.isNullOrBlank() &&
+        !keyAliasValue.isNullOrBlank() &&
+        !keyPasswordValue.isNullOrBlank()
+
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("releaseFromEnv") {
+                storeFile = file(keystoreFile)
+                storePassword = keystorePassword
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
+
+                if (!keystoreTypeValue.isNullOrBlank()) {
+                    storeType = keystoreTypeValue
+                }
             }
         }
+
+        buildTypes {
+            getByName("release") {
+                signingConfig = signingConfigs.getByName("releaseFromEnv")
+            }
+        }
+    } else if (releaseTaskRequested) {
+        throw GradleException(
+            "Release signing env vars missing. Run `mise build`, not `./gradlew assembleRelease` directly."
+        )
     }
 
     buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("release")
+        getByName("release") {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -55,12 +71,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 
     buildFeatures {

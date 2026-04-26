@@ -49,9 +49,12 @@ render.experimental.xml
 
 # Keystore files
 *.jks
+*.p12
 *.keystore
 release.jks
 keystore.creds
+android-signing/
+signing.properties
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
